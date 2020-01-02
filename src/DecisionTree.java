@@ -5,14 +5,14 @@ public class DecisionTree {
     public DTNode root;
     public List<List<Double>> trainData;
     public int numAttr;
-    public List<AttributeNode> attrlist;
+    public List<TreeNode> attrlist;
     public int predictAttr;
     public double predictVal;
     final int MAX_PER_LEAF = 3;
     final int MAX_DEPTH = 20;
 
     // Build a decision tree given a training set
-    DecisionTree(List<List<Double>> trainDataSet, List<AttributeNode> attrlist, int predictAttr) {
+    DecisionTree(List<List<Double>> trainDataSet, List<TreeNode> attrlist, int predictAttr) {
         this.trainData = trainDataSet;
         if (this.trainData.size() > 0) this.numAttr = trainDataSet.get(0).size() - 1;
         this.attrlist = attrlist;

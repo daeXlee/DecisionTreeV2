@@ -1,33 +1,29 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class AttributeNode {
+public class TreeNode {
     public String name;
     public List<String> values;
     public double[] thresholds;
     public boolean isCate;
 
-    AttributeNode(String name) {
+    TreeNode(String name) {
         this.name = name;
         this.values = new ArrayList<String>();
-        this.thresholds = new double[]{Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
+        this.thresholds = new double[]{-999, -999};
         this.isCate = true;
     }
+
     public void addValue(String v) {
-        if (!values.contains(v)) values.add(v);
+        if (values.contains(v) == false) values.add(v);
         setThresholds(v);
     }
 
-    /**
-     * if attribute is numeric, thresholds represent min and max vals
-     * otherwise if it's categorical threshold represents number of categories
-     * @param v
-     */
     public void setThresholds(String v) {
         if (isNumeric(v)) {
             this.isCate = false;
             double i = Double.parseDouble(v);
-            if (this.thresholds[0] == Double.NEGATIVE_INFINITY) {
+            if (this.thresholds[0] == -999) {
                 this.thresholds[0] = i;
                 this.thresholds[1] = i;
             } else {
@@ -40,16 +36,29 @@ public class AttributeNode {
         }
     }
 
-    public double getLT() {
+    public double getLowerThreshold() {
         return this.thresholds[0];
     }
 
-    public double getUT() {
+    public double getUpperThreshold() {
         return this.thresholds[1];
     }
 
     public List<String> getValues() {
         return this.values;
+    }
+
+
+    private static boolean isInteger(String s) {
+        if (s.isEmpty()) return false;
+        for (int i = 0; i < s.length(); i++) {
+            if (i == 0 && s.charAt(i) == '-') {
+                if (s.length() == 1) return false;
+                else continue;
+            }
+            if (Character.digit(s.charAt(i), 10) < 0) return false;
+        }
+        return true;
     }
 
     private static boolean isNumeric(String strNum) {

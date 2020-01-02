@@ -1,22 +1,68 @@
-import java.io.File;
-import java.io.IOException;
+import org.w3c.dom.Attr;
+
+import java.io.*;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        List<AttributeNode> attrList = new ArrayList<AttributeNode>();
-        List<List<Double>> trainData = transformDataSet(parseDataSet(args[0]), attrList);
-        List<List<Double>> testData = transformDataSet(parseDataSet(args[1]), attrList);
+//        List<TreeNode> attrList = new ArrayList<TreeNode>();
+//        List<List<Double>> trainData = transformDataSet(parseDataSet(args[0]), attrList);
+//        List<List<Double>> testData = transformDataSet(parseDataSet(args[1]), attrList);
 
         // Build tree.
-        DecisionTree mTree = new DecisionTree(trainData, attrList, Integer.parseInt(args[2]));
+//        DecisionTree mTree = new DecisionTree(trainData, attrList, Integer.parseInt(args[2]));
 //        System.out.println("Predicting Attribute: " + attrList.get(Integer.parseInt(args[2])).name);
         // Print tree.
-        mTree.printTree();
+//        mTree.printTree();
         // mTree.printTest(testData);
+
+        List<AttributeNode> attrList = preProcess(args[0]);
+        for (AttributeNode n : attrList) {
+            System.out.print(n.name + " ");
+            if (n.isCate) {
+                System.out.println("(Category): " + n.getValues());
+
+            } else {
+                System.out.println("(Numerical): (" + n.getLT() + ", " + n.getUT() + ")");
+            }
+        }
     }
+
+    /**
+     * Pre pass of dataset
+     * Determines characteristics of attributes and stores them
+     * Characteristics include range of values and type of measure used
+     */
+    private static List<AttributeNode> preProcess(String fileName) {
+        List<AttributeNode> attrList = new ArrayList<AttributeNode>();
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
+            String line = "";
+
+            // Get Header and set attrList
+            line = br.readLine();
+            String split[] = line.split(",");
+            for (String s : split) {
+                AttributeNode n = new AttributeNode(s);
+                attrList.add(n);
+            }
+            // Read and add values to attributeNodes
+            while ((line = br.readLine()) != null) {
+                String attrValues[] = line.split(",");
+                for (int i = 0; i < attrValues.length; i++) {
+                    attrList.get(i).addValue(attrValues[i]);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+        return attrList;
+    }
+
+
     /**
      * Initial scan of dataset and puts into a data structure
      * @param file
@@ -69,14 +115,14 @@ public class Main {
         }
     }
 
-    private static List<List<Double>> transformDataSet(List<List<String>> rawData, List<AttributeNode> attrList) {
+    private static List<List<Double>> transformDataSet(List<List<String>> rawData, List<TreeNode> attrList) {
         // Get Attribute Information
         int col = rawData.get(0).size();
         int row = rawData.size();
 
         if (attrList.isEmpty()) {
             for (int i = 0; i < col; i++) {
-                AttributeNode a = new AttributeNode(rawData.get(0).get(i));
+                TreeNode a = new TreeNode(rawData.get(0).get(i));
                 for (int j = 1; j < row; j++) {
                     a.addValue(rawData.get(j).get(i));
                 }
