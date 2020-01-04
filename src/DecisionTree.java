@@ -2,26 +2,32 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DecisionTree {
-    public DTNode root;
-    public List<List<Double>> trainData;
-    public int numAttr;
-    public List<TreeNode> attrlist;
-    public int predictAttr;
-    public double predictVal;
+    private DTNode root;
+    private List<List<Double>> trainData;
+    private List<AttributeNode> attrList;
+    private int predictIndex;  // Index of predict attributed
+    private double predictVal;  // Value that decides labels
+    private AttributeNode predictAttr;
+
+    // Used to determine when a node is a leaf
     final int MAX_PER_LEAF = 3;
     final int MAX_DEPTH = 20;
 
+//    private int numAttr;
+
     // Build a decision tree given a training set
-    DecisionTree(List<List<Double>> trainDataSet, List<TreeNode> attrlist, int predictAttr) {
+    DecisionTree(List<List<Double>> trainDataSet, List<AttributeNode> attrList, int predictIndex) {
         this.trainData = trainDataSet;
-        if (this.trainData.size() > 0) this.numAttr = trainDataSet.get(0).size() - 1;
-        this.attrlist = attrlist;
-        this.predictAttr = predictAttr;
-        this.predictVal = attrlist.get(predictAttr).getUpperThreshold() / 2.0;
-//        this.predictVal = 3;
-        System.out.println("Size: " + trainDataSet.size() + " Attribute: " + attrlist.get(predictAttr).name);
-        System.out.println("Label 0: <= " + predictVal + " Label 1: > " + predictVal);
+        this.attrList = attrList;
+        this.predictIndex = predictIndex;
+        // Set the label for predict attr
+        /** CAN ONLY CLASSIFY USING BINARY LABEL
+         * Currently gets the middle value and sets <= of val and > of val as the 2 labels
+         **/
+        this.predictVal = (attrList.get(predictIndex).getLT() + attrList.get(predictIndex).getUT()) / 2.0;
+        this.predictAttr = attrList.get(predictIndex);
         this.root = buildTree();
+//        if (this.trainData.size() > 0) this.numAttr = trainDataSet.get(0).size() - 1;
     }
 
     private DTNode buildTree() {
@@ -53,7 +59,7 @@ public class DecisionTree {
 
         // Count the number of 0 or 1 in label
         for (List<Double> instance : data) {
-            if (instance.get(predictAttr) <= predictVal) {
+            if (instance.get(predictIndex) <= predictVal) {
                 cnt0++;
             } else {
                 cnt1++;
@@ -113,11 +119,12 @@ public class DecisionTree {
 
     // Print the decision tree in the specified format
     public void printTree() {
+        System.out.println("Predicting: " + predictAttr.getName() + " Label 0: <=" + predictVal + " Label 1: >" + predictVal);
         printTreeNode("", this.root);
     }
 
     public void printTreeNode(String prefixStr, DTNode node) {
-        String printStr = prefixStr + attrlist.get(node.attribute).name;
+        String printStr = prefixStr + attrList.get(node.attribute).name;
         System.out.print(printStr + " <= " + String.format("%d", node.threshold));
         if(node.left.isLeaf()) {
             System.out.print(" : " + String.valueOf(node.left.classLabel));
@@ -144,7 +151,7 @@ public class DecisionTree {
         for (int i = 0; i < testDataSet.size(); i ++)
         {
             int prediction = classify(testDataSet.get(i));
-            int groundTruth = testDataSet.get(i).get(predictAttr);
+            int groundTruth = testDataSet.get(i).get(predictIndex);
             groundTruth = (groundTruth <= predictVal) ? 0 : 1;
             System.out.println(i+1 + ": " + "Prediction: " + prediction + " Actual: " + groundTruth);
             if (groundTruth == prediction) {
@@ -162,11 +169,12 @@ public class DecisionTree {
         double maxInfoGain = 0.0;
 
         // Loop through array of threshold limits of each attribute
-        for (int i = 0; i < attrlist.size(); i++) {
+        for (int i = 0; i < attrList.size(); i++) {  // TODO: May Condense by setting up attribute as an AttributeNode instead of just an index
             // Skip Attribute of Interest
-            if (i == this.predictAttr) continue;
+            if (i == this.predictIndex) continue;
             // Loop through the threshold values of each attribute
-            for (int j = (int) attrlist.get(i).getLowerThreshold(); j <= attrlist.get(i).getUpperThreshold(); j++) {
+            // TODO: Better way to search through attribute thresholds, large range may cause problems going +1 or even small range <1
+            for (int j = (int) attrList.get(i).getLT(); j <= attrList.get(i).getUT(); j++) {
                 double temp = getInfoGain(data, i, j);
                 if (temp > maxInfoGain) {
                     splitInfo[0] = i;  // Save best info gain attribute
@@ -194,10 +202,9 @@ public class DecisionTree {
         double attrRight1 = 0;
         double attrLeft, attrRight;
 
-
         // Calculate entropy of label
         for (List<Double> sample : data) {
-            if (sample.get(this.predictAttr) <= predictVal) {
+            if (sample.get(this.predictIndex) <= predictVal) {
                 cntLb0++;
                 if (sample.get(attribute) <= threshold) {
                     attrLeft0++;

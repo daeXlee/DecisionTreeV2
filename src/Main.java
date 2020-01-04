@@ -1,39 +1,65 @@
-import org.w3c.dom.Attr;
-
 import java.io.*;
-import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
-//        List<TreeNode> attrList = new ArrayList<TreeNode>();
-//        List<List<Double>> trainData = transformDataSet(parseDataSet(args[0]), attrList);
-//        List<List<Double>> testData = transformDataSet(parseDataSet(args[1]), attrList);
+        // TODO: Add Feature for options, 1 being to run a test set which program will split 25% of data
+        // TODO: Option 2 is to predict value of instance given all attributes except what is being predicted
 
-        // Build tree.
-//        DecisionTree mTree = new DecisionTree(trainData, attrList, Integer.parseInt(args[2]));
-//        System.out.println("Predicting Attribute: " + attrList.get(Integer.parseInt(args[2])).name);
-        // Print tree.
-//        mTree.printTree();
-        // mTree.printTest(testData);
-
-        List<AttributeNode> attrList = preProcess(args[0]);
-        for (AttributeNode n : attrList) {
-            System.out.print(n.name + " ");
-            if (n.isCate) {
-                System.out.println("(Category): " + n.getValues());
-
-            } else {
-                System.out.println("(Numerical): (" + n.getLT() + ", " + n.getUT() + ")");
-            }
+        // Check for correct args
+        if (!(Integer.parseInt(args[1]) == 1 || Integer.parseInt(args[1]) == 2)) {
+            System.out.println("Failed to put correct option");
+            System.exit(0);
         }
+        if (Integer.parseInt(args[1]) == 1) {
+            if (args.length != 3) {
+                System.out.println("Error: Usage Main <dataset.csv> 1 <attribute>");
+                System.exit(0);
+            }
+            List<AttributeNode> attrList = preProcess(args[0]);
+            List<List<Double>> dataset = parseDataSet(args[0], attrList);
+            int predictAttr = -1;
+            for (int i = 0; i < attrList.size(); i++) {
+                if (attrList.get(i).getName().equals(args[2]))
+                    predictAttr = i;
+            }
+            if (predictAttr == -1) {
+                System.out.println("Invalid attribute");
+                System.exit(0);
+            }
+            // Build Tree
+            DecisionTree dTree = new DecisionTree(dataset, attrList, predictAttr);
+            dTree.printTree();
+        }
+
+//        for (AttributeNode n : attrList) {
+//            System.out.print(n.name + " ");
+//            if (n.isCate) {
+//                System.out.println("(Category): " + n.getValues());
+//
+//            } else {
+//                System.out.println("(Numerical): (" + n.getLT() + ", " + n.getUT() + ")");
+//            }
+//        }
+
+
+//        for (List<Double> instance : dataset) {
+//            for (Double s : instance) {
+//                System.out.print(s + " ");
+//            }
+//            System.out.println();
+//        }
     }
 
     /**
      * Pre pass of dataset
      * Determines characteristics of attributes and stores them
      * Characteristics include range of values and type of measure used
+     *
+     * @param fileName
+     * @return
      */
     private static List<AttributeNode> preProcess(String fileName) {
         List<AttributeNode> attrList = new ArrayList<AttributeNode>();
@@ -56,91 +82,41 @@ public class Main {
                     attrList.get(i).addValue(attrValues[i]);
                 }
             }
+            br.close();
         } catch (IOException e) {
             System.out.println(e);
         }
         return attrList;
     }
 
-
     /**
-     * Initial scan of dataset and puts into a data structure
-     * @param file
+     * Parses data into a 2D array of strings
+     *
+     * @param fileName
      * @return
      */
-    private static List<List<String>> parseDataSet(String file) {
-        int n = 0;
-        int m = 0;
-        // Figure out the dimensions
+    private static List<List<Double>> parseDataSet(String fileName, List<AttributeNode> preProcess) {
+        List<List<Double>> dataset = new ArrayList<>();
+
         try {
-            Scanner scan = new Scanner(new File(file));
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
 
-            while (scan.hasNextLine()) {
-                String line = scan.nextLine();
-                // Remove rows with missing data containing "?"
-                if (line.indexOf('?') == -1) {
-                    String[] split = line.split(",");
-                    if (m != 0 && split.length != m) m = 0;
-                    else m = split.length;
-                    n++;
-                }
-            }
-            scan.close();
-        }
-        catch (IOException e) {
-        }
-        // Read the data and convert to integers
-        if (n == 0 || m == 0) return null;
-        else {
-            List<List<String>> dataSet = new ArrayList<List<String>>();
-            try {
-                Scanner scan = new Scanner(new File(file));
-                for (int i = 0; i < n; i ++) {
-                    List<String> data = new ArrayList<String>();
-                    String line = scan.nextLine();
-                    while (line.indexOf('?') != -1) line = scan.nextLine();
-                    String[] split = line.split(",");
-                    // Do not read the first column
-                    for (int j = 1; j < m; j++) {
-//                        System.out.println(split[j]);
-                        data.add(split[j]);
+            // Skip Header Line
+            dataset = br.lines().skip(1).map((line) -> {
+                String split[] = line.split(",");
+                List<Double> instance = new ArrayList<>();
+                for (int i = 0; i < split.length; i++) {
+                    if (preProcess.get(i).isCate) {  // Check if attr is a category
+                        instance.add((double) (preProcess.get(i).getValues().indexOf(split[i])));
+                    } else {
+                        instance.add(Double.parseDouble(split[i]));
                     }
-                    dataSet.add(data);
                 }
-                scan.close();
-            }
-            catch (IOException e) {
-            }
-            return dataSet;
-        }
-    }
+                return instance;
+            }).collect(Collectors.toList());
 
-    private static List<List<Double>> transformDataSet(List<List<String>> rawData, List<TreeNode> attrList) {
-        // Get Attribute Information
-        int col = rawData.get(0).size();
-        int row = rawData.size();
-
-        if (attrList.isEmpty()) {
-            for (int i = 0; i < col; i++) {
-                TreeNode a = new TreeNode(rawData.get(0).get(i));
-                for (int j = 1; j < row; j++) {
-                    a.addValue(rawData.get(j).get(i));
-                }
-                attrList.add(a);
-            }
-        }
-
-        List<List<Double>> dataset = new ArrayList<List<Double>>();
-        for (int i = 1; i < row; i++) {
-            ArrayList<Double> data = new ArrayList<Double>();
-            for (int j = 0; j < col; j++) {
-                if (attrList.get(j).isCate) {
-                    data.add((double) attrList.get(j).getValues().indexOf(rawData.get(i).get(j)));
-                } else {
-                    data.add(Double.parseDouble(rawData.get(i).get(j)));
-                }
-            }
-            dataset.add(data);
+        } catch (IOException e) {
+            System.out.println(e);
         }
         return dataset;
     }

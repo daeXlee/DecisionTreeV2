@@ -52,6 +52,10 @@ public class AttributeNode {
         return this.values;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     private static boolean isNumeric(String strNum) {
         if (strNum == null) {
             return false;
