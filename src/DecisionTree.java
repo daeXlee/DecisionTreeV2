@@ -25,7 +25,7 @@ public class DecisionTree {
         /** CAN ONLY CLASSIFY USING BINARY LABEL
          * Currently gets the middle value and sets <= of val and > of val as the 2 labels
          **/
-        this.predictVal = (attrList.get(predictIndex).getLT() + attrList.get(predictIndex).getUT()) / 2.0 - 1;
+        this.predictVal = (attrList.get(predictIndex).getLT() + attrList.get(predictIndex).getUT()) / 2.0;
         this.predictAttr = attrList.get(predictIndex);
         this.root = buildTree();
 //        if (this.trainData.size() > 0) this.numAttr = trainDataSet.get(0).size() - 1;

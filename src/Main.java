@@ -158,6 +158,13 @@ public class Main {
         return dataset;
     }
 
+    /**
+     * Parses the instance to predict, must have a ? to indicate
+     * attribute to be predicted on
+     * @param fileName
+     * @param preProcess
+     * @return
+     */
     private static List<Double> parseInstance(String fileName, List<AttributeNode> preProcess) {
         List<Double> instance = new ArrayList<>();
 
