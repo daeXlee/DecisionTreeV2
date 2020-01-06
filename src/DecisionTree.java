@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,7 @@ public class DecisionTree {
         /** CAN ONLY CLASSIFY USING BINARY LABEL
          * Currently gets the middle value and sets <= of val and > of val as the 2 labels
          **/
-        this.predictVal = (attrList.get(predictIndex).getLT() + attrList.get(predictIndex).getUT()) / 2.0;
+        this.predictVal = (attrList.get(predictIndex).getLT() + attrList.get(predictIndex).getUT()) / 2.0 - 1;
         this.predictAttr = attrList.get(predictIndex);
         this.root = buildTree();
 //        if (this.trainData.size() > 0) this.numAttr = trainDataSet.get(0).size() - 1;
@@ -100,7 +101,6 @@ public class DecisionTree {
     }
 
     public int classify(List<Double> instance) {
-        // Note that the last element of the array is the label.
         DTNode node = root;
         while (node != null) {
             if (node.isLeaf()) {
@@ -155,7 +155,7 @@ public class DecisionTree {
             double groundTruth = testDataSet.get(i).get(predictIndex);
             int groundTruthLabel = (groundTruth <= predictVal) ? 0 : 1;
 
-            System.out.print(i+1 + ": " + "Prediction: " + prediction + predictVal + " Actual: " + groundTruth);
+            System.out.println(i+1 + ": " + "Prediction: " + prediction + predictVal + " Actual: " + groundTruth);
             if (groundTruthLabel == predictionLabel) {
                 numEqual++;
             }
@@ -164,6 +164,28 @@ public class DecisionTree {
         double accuracy = numEqual*100.0 / (double)numTotal;
         System.out.println(String.format("%.2f", accuracy) + "%");
         return accuracy;
+    }
+
+    public void predictInstance(List<Double> instance) {
+        List<String> translatedInstance = new ArrayList<>();
+        String prediction = (classify(instance) == 0) ? "<=" : " >";
+
+        for (int i = 0; i < instance.size(); i++) {
+            if (instance.get(i) == null) {
+                translatedInstance.add("?");
+            } else {
+                if (attrList.get(i).isCate) {
+                    translatedInstance.add(attrList.get(i).getValues().get(instance.get(i).intValue()));
+                } else {
+                    translatedInstance.add("" + instance.get(i));
+                }
+            }
+        }
+        System.out.print("Predicting Attribute: " + predictAttr.getName() + "\n" + "For Instance: ");
+        for (String s : translatedInstance) {
+            System.out.print(s + " ");
+        }
+        System.out.println("\nValue: " + prediction + predictVal);
     }
 
     public double[] getSplitAttribute(List<List<Double>> data) {
