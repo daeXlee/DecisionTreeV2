@@ -29,9 +29,30 @@ public class Main {
                 System.out.println("Invalid attribute");
                 System.exit(0);
             }
+            // Split array into training set and testing set
+            int splitIndex = (int) Math.round(dataset.size() * 0.75);
+            List<List<Double>> trainSet = dataset.subList(0, splitIndex);
+//            System.out.println("TRAINING");
+//            for (List<Double> instance : trainSet) {
+//                for (Double s : instance) {
+//                    System.out.print(s + " ");
+//                }
+//            System.out.println();
+//            }
+            List<List<Double>> testSet = dataset.subList(splitIndex, dataset.size());
+//            System.out.println("TESTING");
+//            for (List<Double> instance : testSet) {
+//                for (Double s : instance) {
+//                    System.out.print(s + " ");
+//                }
+//                System.out.println();
+//            }
             // Build Tree
-            DecisionTree dTree = new DecisionTree(dataset, attrList, predictAttr);
+            DecisionTree dTree = new DecisionTree(trainSet, attrList, predictAttr);
             dTree.printTree();
+
+            // Testing Phase
+            dTree.printTest(testSet);
         }
 
 //        for (AttributeNode n : attrList) {
@@ -45,12 +66,7 @@ public class Main {
 //        }
 
 
-//        for (List<Double> instance : dataset) {
-//            for (Double s : instance) {
-//                System.out.print(s + " ");
-//            }
-//            System.out.println();
-//        }
+
     }
 
     /**

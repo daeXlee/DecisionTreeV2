@@ -99,7 +99,7 @@ public class DecisionTree {
         return innerNode;
     }
 
-    public int classify(List<Integer> instance) {
+    public int classify(List<Double> instance) {
         // Note that the last element of the array is the label.
         DTNode node = root;
         while (node != null) {
@@ -145,16 +145,18 @@ public class DecisionTree {
         }
     }
 
-    public double printTest(List<List<Integer>> testDataSet) {
+    public double printTest(List<List<Double>> testDataSet) {
         int numEqual = 0;
         int numTotal = 0;
         for (int i = 0; i < testDataSet.size(); i ++)
         {
-            int prediction = classify(testDataSet.get(i));
-            int groundTruth = testDataSet.get(i).get(predictIndex);
-            groundTruth = (groundTruth <= predictVal) ? 0 : 1;
-            System.out.println(i+1 + ": " + "Prediction: " + prediction + " Actual: " + groundTruth);
-            if (groundTruth == prediction) {
+            int predictionLabel = classify(testDataSet.get(i));
+            String prediction = (predictionLabel == 0) ? "<=" : " >";
+            double groundTruth = testDataSet.get(i).get(predictIndex);
+            int groundTruthLabel = (groundTruth <= predictVal) ? 0 : 1;
+
+            System.out.print(i+1 + ": " + "Prediction: " + prediction + predictVal + " Actual: " + groundTruth);
+            if (groundTruthLabel == predictionLabel) {
                 numEqual++;
             }
             numTotal++;
