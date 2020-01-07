@@ -77,15 +77,15 @@ public class Main {
             dTree.predictInstance(instance);
         }
 
-//        for (AttributeNode n : attrList) {
-//            System.out.print(n.name + " ");
-//            if (n.isCate) {
-//                System.out.println("(Category): " + n.getValues());
-//
-//            } else {
-//                System.out.println("(Numerical): (" + n.getLT() + ", " + n.getUT() + ")");
-//            }
-//        }
+        for (AttributeNode n : attrList) {
+            System.out.print(n.name + " ");
+            if (n.isCate) {
+                System.out.println("(Category): " + n.getValues());
+
+            } else {
+                System.out.println("(Numerical): (" + n.getLT() + ", " + n.getUT() + ")");
+            }
+        }
 
 
 
