@@ -56,6 +56,11 @@ public class AttributeNode {
         return this.name;
     }
 
+    public double getSplit() {
+        // Default take median of two thresholds
+        return (this.thresholds[0] + this.thresholds[1]) / 2.0;
+    }
+
     private static boolean isNumeric(String strNum) {
         if (strNum == null) {
             return false;

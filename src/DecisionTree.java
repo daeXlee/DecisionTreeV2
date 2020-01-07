@@ -14,21 +14,18 @@ public class DecisionTree {
     final int MAX_PER_LEAF = 3;
     final int MAX_DEPTH = 20;
 
-//    private int numAttr;
-
     // Build a decision tree given a training set
     DecisionTree(List<List<Double>> trainDataSet, List<AttributeNode> attrList, int predictIndex) {
         this.trainData = trainDataSet;
         this.attrList = attrList;
         this.predictIndex = predictIndex;
+        this.predictAttr = attrList.get(predictIndex);
         // Set the label for predict attr
         /** CAN ONLY CLASSIFY USING BINARY LABEL
          * Currently gets the middle value and sets <= of val and > of val as the 2 labels
          **/
-        this.predictVal = (attrList.get(predictIndex).getLT() + attrList.get(predictIndex).getUT()) / 2.0;
-        this.predictAttr = attrList.get(predictIndex);
+        this.predictVal = this.predictAttr.getSplit();
         this.root = buildTree();
-//        if (this.trainData.size() > 0) this.numAttr = trainDataSet.get(0).size() - 1;
     }
 
     private DTNode buildTree() {
@@ -117,15 +114,38 @@ public class DecisionTree {
         return 0;
     }
 
+    public String[] formatLabel(AttributeNode predictAttr, double splitVal) {
+        String label[] = {"[", "["};
+        if (predictAttr.isCate) {
+            List<String> label0 = predictAttr.getValues().subList(0, (int)splitVal + 1);
+            label[0] = label[0] + String.join(", ", label0);
+            label[0] = label[0] + "]";
+
+            List<String> label1 = predictAttr.getValues().subList((int)splitVal + 1, predictAttr.getValues().size());
+            label[1] = label[1] + String.join(", ", label1);
+            label[1] = label[1] + "]";
+        } else {
+            label[0] = "<=" + splitVal;
+            label[1] = ">" + splitVal;
+        }
+
+        return label;
+    }
+
     // Print the decision tree in the specified format
     public void printTree() {
-        System.out.println("Predicting: " + predictAttr.getName() + " Label 0: <=" + predictVal + " Label 1: >" + predictVal);
+        String l0 = formatLabel(this.predictAttr, this.predictVal)[0];
+        String l1 = formatLabel(this.predictAttr, this.predictVal)[1];
+
+        System.out.println("Predicting: " + predictAttr.getName() + " Label 0: " + l0 + " Label 1: " + l1);
         printTreeNode("", this.root);
     }
 
     public void printTreeNode(String prefixStr, DTNode node) {
         String printStr = prefixStr + attrList.get(node.attribute).name;
-        System.out.print(printStr + " <= " + String.format("%d", node.threshold));
+        String labels[] = formatLabel(attrList.get(node.attribute), node.threshold);
+        System.out.print(printStr + " " + labels[0]);
+        //System.out.print(printStr + " <= " + String.format("%d", node.threshold));
         if(node.left.isLeaf()) {
             System.out.print(" : " + String.valueOf(node.left.classLabel));
             System.out.printf(", Info Gain: %.4f\n", node.infoGain);
@@ -135,7 +155,8 @@ public class DecisionTree {
             System.out.println();
             printTreeNode(prefixStr + "|\t", node.left);
         }
-        System.out.print(printStr + " > " + String.format("%d", node.threshold));
+        System.out.print(printStr + " " + labels[1]);
+//        System.out.print(printStr + " > " + String.format("%d", node.threshold));
         if(node.right.isLeaf()) {
             System.out.println(" : " + String.valueOf(node.right.classLabel));
         }
@@ -148,14 +169,20 @@ public class DecisionTree {
     public double printTest(List<List<Double>> testDataSet) {
         int numEqual = 0;
         int numTotal = 0;
+
         for (int i = 0; i < testDataSet.size(); i ++)
         {
             int predictionLabel = classify(testDataSet.get(i));
-            String prediction = (predictionLabel == 0) ? "<=" : " >";
-            double groundTruth = testDataSet.get(i).get(predictIndex);
-            int groundTruthLabel = (groundTruth <= predictVal) ? 0 : 1;
+            String prediction = (predictionLabel == 0)
+                    ? formatLabel(this.predictAttr, this.predictVal)[0]
+                    : formatLabel(this.predictAttr, this.predictVal)[1];
 
-            System.out.println(i+1 + ": " + "Prediction: " + prediction + predictVal + " Actual: " + groundTruth);
+            String groundTruth = (attrList.get(predictIndex).isCate)
+                    ? attrList.get(predictIndex).getValues().get(testDataSet.get(i).get(predictIndex).intValue())
+                    : String.valueOf(testDataSet.get(i).get(predictIndex));
+            int groundTruthLabel = (testDataSet.get(i).get(predictIndex) <= predictVal) ? 0 : 1;
+
+            System.out.println(i+1 + ": " + "Prediction: " + prediction + " Actual: " + groundTruth);
             if (groundTruthLabel == predictionLabel) {
                 numEqual++;
             }
@@ -193,11 +220,13 @@ public class DecisionTree {
         double maxInfoGain = 0.0;
 
         // Loop through array of threshold limits of each attribute
-        for (int i = 0; i < attrList.size(); i++) {  // TODO: May Condense by setting up attribute as an AttributeNode instead of just an index
+        // TODO: May Condense by setting up attribute as an AttributeNode instead of just an index
+        for (int i = 0; i < attrList.size(); i++) {
             // Skip Attribute of Interest
             if (i == this.predictIndex) continue;
             // Loop through the threshold values of each attribute
-            // TODO: Better way to search through attribute thresholds, large range may cause problems going +1 or even small range <1
+            // TODO: Better way to search through attribute thresholds, large range may cause problems going +1 or even
+            //  small range <1
             for (int j = (int) attrList.get(i).getLT(); j <= attrList.get(i).getUT(); j++) {
                 double temp = getInfoGain(data, i, j);
                 if (temp > maxInfoGain) {

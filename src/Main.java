@@ -56,6 +56,7 @@ public class Main {
             dTree.printTree();
 
             // Testing Phase
+            System.out.println("-----TESTING-----");
             dTree.printTest(testSet);
         } else {  // Option 2
             List<Double> instance = parseInstance(args[2], attrList);
