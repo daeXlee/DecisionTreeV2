@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Adapted from CS 540 Decision Tree Homework
  */
@@ -10,6 +13,8 @@ public class DTNode {
     public int threshold;
     //Info Gain
     public double infoGain;
+    // Children
+    public List<DTNode> children;
     //Left child. Can directly access and update. <= threshold.
     public DTNode left = null;
     //Right child. Can directly access and update. > threshold.
@@ -20,6 +25,7 @@ public class DTNode {
         this.attribute = attribute;
         this.threshold = threshold;
         this.infoGain = infoGain;
+        this.children = new ArrayList<DTNode>();
     }
 
     public boolean isLeaf() {

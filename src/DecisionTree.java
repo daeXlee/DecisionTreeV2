@@ -51,20 +51,31 @@ public class DecisionTree {
     }
 
     private DTNode treeBuilder(List<List<Double>> data, int depth) {
-        int cnt0 = 0;
-        int cnt1 = 0;
         int label;
+        int cnt[] = new int[predictAttr.numLabels];
 
-        // Count the number of 0 or 1 in label
-        for (List<Double> instance : data) {
-            if (instance.get(predictIndex) <= predictVal) {
-                cnt0++;
-            } else {
-                cnt1++;
+        if (predictAttr.isCate) {
+            for (List<Double> sample : data) {
+                cnt[sample.get(predictIndex).intValue()]++;
             }
+            // Determine label if leaf node
+            label = 0;
+            for (int i = 1; i < predictAttr.numLabels; i++) {
+                if (cnt[i] > cnt[label])
+                    label = i;
+            }
+        } else {
+            // Count the number of 0 or 1 in label
+            for (List<Double> sample : data) {
+                if (sample.get(predictIndex) <= predictVal) {
+                    cnt[0]++;
+                } else {
+                    cnt[1]++;
+                }
+            }
+            // Determine what label if leaf node
+            label = (cnt[0] <= cnt[1]) ? 1 : 0;
         }
-        // Determine what label if leaf node
-        label = (cnt0 <= cnt1) ? 1 : 0;
 
         // Check if leaf node based on params
         if (data.size() <= MAX_PER_LEAF || depth == MAX_DEPTH) {
@@ -115,15 +126,23 @@ public class DecisionTree {
     }
 
     public String[] formatLabel(AttributeNode predictAttr, double splitVal) {
-        String label[] = {"[", "["};
+//        String label[] = {"[", "["};
+        String label[] = new String[predictAttr.numLabels];
+        // Initialize Labels with '['
+        for (int i = 0; i < label.length; i++) {
+            label[i] = "[";
+        }
         if (predictAttr.isCate) {
-            List<String> label0 = predictAttr.getValues().subList(0, (int)splitVal + 1);
-            label[0] = label[0] + String.join(", ", label0);
-            label[0] = label[0] + "]";
-
-            List<String> label1 = predictAttr.getValues().subList((int)splitVal + 1, predictAttr.getValues().size());
-            label[1] = label[1] + String.join(", ", label1);
-            label[1] = label[1] + "]";
+            for (int i = 0; i < label.length; i++) {
+                label[i] = label[i] + predictAttr.getValues().get(i) + "]";
+            }
+//            List<String> label0 = predictAttr.getValues().subList(0, (int)splitVal + 1);
+//            label[0] = label[0] + String.join(", ", label0);
+//            label[0] = label[0] + "]";
+//
+//            List<String> label1 = predictAttr.getValues().subList((int)splitVal + 1, predictAttr.getValues().size());
+//            label[1] = label[1] + String.join(", ", label1);
+//            label[1] = label[1] + "]";
         } else {
             label[0] = "<=" + splitVal;
             label[1] = ">" + splitVal;
@@ -134,10 +153,15 @@ public class DecisionTree {
 
     // Print the decision tree in the specified format
     public void printTree() {
-        String l0 = formatLabel(this.predictAttr, this.predictVal)[0];
-        String l1 = formatLabel(this.predictAttr, this.predictVal)[1];
+//        String l0 = formatLabel(this.predictAttr, this.predictVal)[0];
+//        String l1 = formatLabel(this.predictAttr, this.predictVal)[1];
+        String l[] = formatLabel(this.predictAttr, this.predictVal);
 
-        System.out.println("Predicting: " + predictAttr.getName() + " Label 0: " + l0 + " Label 1: " + l1);
+        System.out.print("Predicting: " + predictAttr.getName());
+        for (int i = 0; i < predictAttr.numLabels; i++) {
+            System.out.print( " Label " + i + ": " + l[i]);
+        }
+        System.out.println();
         printTreeNode("", this.root);
     }
 
