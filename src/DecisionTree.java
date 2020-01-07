@@ -39,13 +39,17 @@ public class DecisionTree {
                 .filter(x -> x.get((int) split[0]) <= split[1])
                 .collect(Collectors.toList());
 
-        root.left = treeBuilder(leftData, 1);
+//        root.left = treeBuilder(leftData, 1);
+        DTNode left = treeBuilder(leftData, 1);
+        root.children.add(left);
 
         List<List<Double>> rightData = trainData.stream()
                 .filter(x -> x.get((int) split[0]) > split[1])
                 .collect(Collectors.toList());
 
-        root.right = treeBuilder(rightData, 1);
+//        root.right = treeBuilder(rightData, 1);
+        DTNode right = treeBuilder(rightData, 1);
+        root.children.add(right);
 
         return root;
     }
@@ -97,13 +101,17 @@ public class DecisionTree {
                 .filter(x -> x.get((int) split[0]) <= split[1])
                 .collect(Collectors.toList());
 
-        innerNode.left = treeBuilder(leftData, depth + 1);
+//        innerNode.left = treeBuilder(leftData, depth + 1);
+        DTNode left = treeBuilder(leftData, depth + 1);
+        innerNode.children.add(left);
 
         List<List<Double>> rightData = data.stream()
                 .filter(x -> x.get((int) split[0]) > split[1])
                 .collect(Collectors.toList());
 
-        innerNode.right = treeBuilder(rightData, depth + 1);
+//        innerNode.right = treeBuilder(rightData, depth + 1);
+        DTNode right = treeBuilder(rightData, depth  + 1);
+        innerNode.children.add(right);
 
         return innerNode;
     }

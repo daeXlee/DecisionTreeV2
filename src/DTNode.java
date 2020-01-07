@@ -28,7 +28,8 @@ public class DTNode {
         this.children = new ArrayList<DTNode>();
     }
 
-    public boolean isLeaf() {
-        return this.left == null && this.right == null;
-    }
+//    public boolean isLeaf() {
+//        return this.left == null && this.right == null;
+//    }
+    public boolean isLeaf() { return children.isEmpty();}
 }
