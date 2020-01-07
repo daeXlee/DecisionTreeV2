@@ -61,7 +61,7 @@ public class DecisionTree {
             // Determine label if leaf node
             label = 0;
             for (int i = 1; i < predictAttr.numLabels; i++) {
-                if (cnt[i] > cnt[label])
+                if (cnt[i] >= cnt[label])
                     label = i;
             }
         } else {
@@ -125,24 +125,27 @@ public class DecisionTree {
         return 0;
     }
 
-    public String[] formatLabel(AttributeNode predictAttr, double splitVal) {
+    public String[] formatLabel(AttributeNode attribute, double splitVal) {
 //        String label[] = {"[", "["};
-        String label[] = new String[predictAttr.numLabels];
+        String label[] = new String[attribute.numLabels];
         // Initialize Labels with '['
         for (int i = 0; i < label.length; i++) {
             label[i] = "[";
         }
-        if (predictAttr.isCate) {
-            for (int i = 0; i < label.length; i++) {
-                label[i] = label[i] + predictAttr.getValues().get(i) + "]";
+        if (attribute.isCate) {
+            if (attribute.getName().equals(this.predictAttr.getName())) {
+                for (int i = 0; i < label.length; i++) {
+                    label[i] = label[i] + attribute.getValues().get(i) + "]";
+                }
+            } else {
+                List<String> label0 = attribute.getValues().subList(0, (int)splitVal + 1);
+                label[0] = label[0] + String.join(", ", label0);
+                label[0] = label[0] + "]";
+
+                List<String> label1 = attribute.getValues().subList((int)splitVal + 1, attribute.getValues().size());
+                label[1] = label[1] + String.join(", ", label1);
+                label[1] = label[1] + "]";
             }
-//            List<String> label0 = predictAttr.getValues().subList(0, (int)splitVal + 1);
-//            label[0] = label[0] + String.join(", ", label0);
-//            label[0] = label[0] + "]";
-//
-//            List<String> label1 = predictAttr.getValues().subList((int)splitVal + 1, predictAttr.getValues().size());
-//            label[1] = label[1] + String.join(", ", label1);
-//            label[1] = label[1] + "]";
         } else {
             label[0] = "<=" + splitVal;
             label[1] = ">" + splitVal;
