@@ -6,12 +6,14 @@ public class AttributeNode {
     public List<String> values;
     public double[] thresholds;
     public boolean isCate;
+    public int numLabels;
 
     AttributeNode(String name) {
         this.name = name;
         this.values = new ArrayList<String>();
         this.thresholds = new double[]{Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
         this.isCate = true;
+        this.numLabels = 0;
     }
     public void addValue(String v) {
         if (!values.contains(v)) values.add(v);
@@ -34,9 +36,11 @@ public class AttributeNode {
                 if (this.thresholds[0] > i) this.thresholds[0] = i;
                 if (this.thresholds[1] < i) this.thresholds[1] = i;
             }
+            this.numLabels = 2;
         } else {
             this.thresholds[0] = 0;
             this.thresholds[1] = this.values.size() - 1;
+            this.numLabels = this.values.size();
         }
     }
 

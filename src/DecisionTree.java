@@ -244,7 +244,7 @@ public class DecisionTree {
         return splitInfo;
     }
 
-    public double getInfoGain(List<List<Double>> data, int attribute, int threshold) {
+    public double getInfoGainV2(List<List<Double>> data, int attribute, int threshold) {
         double hY, hYX;
         double cntLb0 = 0;
         double cntLb1 = 0;
@@ -274,7 +274,8 @@ public class DecisionTree {
             }
         }
         total = cntLb0 + cntLb1;
-        hY = entropy(cntLb0, cntLb1, total);
+        hY = entropy(new double[]{cntLb0, cntLb1, total});
+//         hY = entropy(cntLb0, cntLb1, total);
 
         attrLeft = attrLeft0 + attrLeft1;
         attrRight = attrRight0 + attrRight1;
@@ -282,6 +283,64 @@ public class DecisionTree {
                 (attrRight / total) * entropy(attrRight0, attrRight1, attrRight);
 
         return hY - hYX;
+    }
+
+    public double getInfoGain(List<List<Double>> data, int attribute, int threshold) {
+        double parent[] = new double[predictAttr.numLabels + 1];
+        double left[] = new double[predictAttr.numLabels + 1]; // TODO: NEED TO STORE IN ARRAY, SINCE MULTIPLE SPLITS
+        double right[] = new double[predictAttr.numLabels + 1];
+        double hY, hYX;
+
+        // Count and store labels before and after split
+       // if (predictAttr.isCate) {
+
+       // } else {
+            for (List<Double> sample : data) {
+                if (sample.get(this.predictIndex) <= predictVal) {
+                    parent[0]++;
+                    if (sample.get(attribute) <= threshold) {
+                        left[0]++;
+                    } else {
+                        right[0]++;
+                    }
+                } else {
+                    parent[1]++;
+                    if (sample.get(attribute) <= threshold) {
+                        left[1]++;
+                    } else {
+                        right[1]++;
+                    }
+                }
+            }
+        //}
+        // Get Totals and store at the end of array
+        for (int i = 0; i < predictAttr.numLabels; i++) {
+            parent[predictAttr.numLabels] += parent[i];
+            left[predictAttr.numLabels] += left[i];
+            right[predictAttr.numLabels] += right[i];
+        }
+
+        // Calculate Entropy of Parent
+        hY = entropy(parent);
+
+        // Calculate Entropy of Split and weights
+        // TODO: NEED TO CHANGE
+        hYX = (left[predictAttr.numLabels] / parent[predictAttr.numLabels]) * entropy(left) +
+                (right[predictAttr.numLabels] / parent[predictAttr.numLabels]) * entropy(right);
+
+        // Info Gain is Entropy of Parent - Weight * Entropy of Split
+        return hY - hYX;
+    }
+
+    public double entropy(double a[]) {
+        double result = 0.0;
+        if (a[a.length - 1] == 0)
+            return 0;
+        for (int i = 0; i < a.length - 1; i++) {
+            result += -1 * (a[i] / a[a.length - 1]) * log2(a[i] / a[a.length - 1]);
+        }
+
+        return result;
     }
 
     public double entropy(double lb0, double lb1, double total) {
@@ -298,7 +357,7 @@ public class DecisionTree {
     }
 
     public double log2(double x) {
-        return Math.log(x) / Math.log(2);
+        return (x != 0) ? (Math.log(x) / Math.log(2)) : 0;
     }
 
 }
