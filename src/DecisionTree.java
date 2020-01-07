@@ -244,47 +244,6 @@ public class DecisionTree {
         return splitInfo;
     }
 
-    public double getInfoGainV2(List<List<Double>> data, int attribute, int threshold) {
-        double hY, hYX;
-        double cntLb0 = 0;
-        double cntLb1 = 0;
-        double total;
-        double attrLeft0 = 0;
-        double attrLeft1 = 0;
-        double attrRight0 = 0;
-        double attrRight1 = 0;
-        double attrLeft, attrRight;
-
-        // Calculate entropy of label
-        for (List<Double> sample : data) {
-            if (sample.get(this.predictIndex) <= predictVal) {
-                cntLb0++;
-                if (sample.get(attribute) <= threshold) {
-                    attrLeft0++;
-                } else {
-                    attrRight0++;
-                }
-            } else {
-                cntLb1++;
-                if (sample.get(attribute) <= threshold) {
-                    attrLeft1++;
-                } else {
-                    attrRight1++;
-                }
-            }
-        }
-        total = cntLb0 + cntLb1;
-        hY = entropy(new double[]{cntLb0, cntLb1, total});
-//         hY = entropy(cntLb0, cntLb1, total);
-
-        attrLeft = attrLeft0 + attrLeft1;
-        attrRight = attrRight0 + attrRight1;
-        hYX = (attrLeft / total) * entropy(attrLeft0, attrLeft1, attrLeft) +
-                (attrRight / total) * entropy(attrRight0, attrRight1, attrRight);
-
-        return hY - hYX;
-    }
-
     public double getInfoGain(List<List<Double>> data, int attribute, int threshold) {
         double parent[] = new double[predictAttr.numLabels + 1];
         double left[] = new double[predictAttr.numLabels + 1]; // TODO: NEED TO STORE IN ARRAY, SINCE MULTIPLE SPLITS
@@ -292,23 +251,32 @@ public class DecisionTree {
         double hY, hYX;
 
         // Count and store labels before and after split
-       // if (predictAttr.isCate) {
+//        if (attrList.get(attribute).isCate) {
 
        // } else {
             for (List<Double> sample : data) {
-                if (sample.get(this.predictIndex) <= predictVal) {
-                    parent[0]++;
+                if (predictAttr.isCate) {
+                    parent[sample.get(this.predictIndex).intValue()]++;
                     if (sample.get(attribute) <= threshold) {
-                        left[0]++;
+                        left[sample.get(this.predictIndex).intValue()]++;
                     } else {
-                        right[0]++;
+                        right[sample.get(this.predictIndex).intValue()]++;
                     }
                 } else {
-                    parent[1]++;
-                    if (sample.get(attribute) <= threshold) {
-                        left[1]++;
+                    if (sample.get(this.predictIndex) <= predictVal) {
+                        parent[0]++;
+                        if (sample.get(attribute) <= threshold) {
+                            left[0]++;
+                        } else {
+                            right[0]++;
+                        }
                     } else {
-                        right[1]++;
+                        parent[1]++;
+                        if (sample.get(attribute) <= threshold) {
+                            left[1]++;
+                        } else {
+                            right[1]++;
+                        }
                     }
                 }
             }
@@ -341,19 +309,6 @@ public class DecisionTree {
         }
 
         return result;
-    }
-
-    public double entropy(double lb0, double lb1, double total) {
-        if (total == 0)
-            return 0;
-        if (lb0 == 0 && lb1 == 0)
-            return 0;
-        if (lb0 == 0)
-            return -1 * (lb1 / total) * log2(lb1 / total);
-        if (lb1 == 0)
-            return -1 * (lb0 / total) * log2(lb0 / total);
-
-        return -1 * (lb0 / total) * log2(lb0 / total) - (lb1 / total) * log2(lb1 / total);
     }
 
     public double log2(double x) {
