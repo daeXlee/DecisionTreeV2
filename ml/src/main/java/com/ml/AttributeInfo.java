@@ -3,6 +3,8 @@ package com.ml;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.math.NumberUtils;
+
 public class AttributeInfo {
     private String name;
     private Set<String> values;
@@ -26,5 +28,9 @@ public class AttributeInfo {
 
     public void addValue(String value) {
         this.values.add(value);
+    }
+
+    public boolean isContinous() {
+        return this.values.stream().allMatch(x -> NumberUtils.isCreatable(x));
     }
 }
