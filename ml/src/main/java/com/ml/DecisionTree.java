@@ -1,16 +1,12 @@
 package com.ml;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import javax.management.InstanceAlreadyExistsException;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -19,20 +15,20 @@ import org.apache.commons.lang3.tuple.Pair;
 public class DecisionTree {
 
     public class Node {
-        //If leaf, classification to return.
+        // If leaf, classification to return.
         public String classification;
-        //Attribute split label index.
+        // Attribute split label index.
         public int attribute;
-        //Threshold that continous attributes are split on.
+        // Threshold that continous attributes are split on.
         public double threshold;
         // Children nodes: Continous - <=, > Nominal - All options
-        public Hashtable<String, Node> children;
+        public HashMap<String, Node> children;
 
         public Node(String classification, int attribute, double threshold) {
             this.classification = classification;
             this.attribute = attribute;
             this.threshold = threshold;
-            this.children = new Hashtable<String,Node>();
+            this.children = new HashMap<String,Node>();
         }
         
         public boolean isLeaf() {
@@ -54,15 +50,97 @@ public class DecisionTree {
         this.trainData = trainData;
         this.attributeInfoList = attributeInfoList;
         this.classIndex = classIndex;
+        this.root = buildTree();
     }
 
     // Build Tree
     private Node buildTree() {
         // Initial Best Split
         Pair<Integer, Double> splitInformation = getSplitAttribute(trainData);
+        AttributeInfo bestSplitAttributeInfo = attributeInfoList.get(splitInformation.getLeft());
         Node root = new Node("", splitInformation.getLeft(), splitInformation.getRight());
 
+        if (bestSplitAttributeInfo.isContinous()) {
+            List<String[]> lessEqualChild = trainData.stream()
+                .filter(x -> NumberUtils.toDouble(x[splitInformation.getLeft()]) <= splitInformation.getRight())
+                .collect(Collectors.toList());
+            root.children.put("<=", treeBuilder(lessEqualChild, 1));
+
+            List<String[]> greaterChild = trainData.stream()
+                .filter(x -> NumberUtils.toDouble(x[splitInformation.getLeft()]) > splitInformation.getRight())
+                .collect(Collectors.toList());
+            root.children.put(">", treeBuilder(greaterChild, 1));
+        }
+        else {
+            for (String attributeOption : bestSplitAttributeInfo.getValues()) {
+                List<String[]> childData = trainData.stream()
+                    .filter(x -> x[splitInformation.getLeft()].equals(attributeOption))
+                    .collect(Collectors.toList());
+                root.children.put(attributeOption, treeBuilder(childData, 1));
+            }
+        }
+
         return root;
+    }
+
+    private Node treeBuilder(List<String[]> data, int depth) {
+        // Check if Leaf Node: if size is less then MAX_PER_LEAF or hits Depth or if all data is one classification
+        AttributeInfo classAttribute = attributeInfoList.get(classIndex);
+        String classLabel = "";
+        long majorityClassCount = 0;
+
+        if (classAttribute.isContinous()) {
+            long lessThanEqualCount =  data.stream()
+                .filter(x -> NumberUtils.toDouble(x[classIndex]) <= classThreshold).count();
+            long greaterCount = data.stream()
+                .filter(x -> NumberUtils.toDouble(x[classIndex]) > classThreshold).count();
+
+            majorityClassCount = Math.max(lessThanEqualCount, greaterCount);
+            classLabel = lessThanEqualCount <= greaterCount ? ">" : "<=";
+            
+        }
+        else {
+            for (String attributeOption : classAttribute.getValues()) {
+                long tempCount = data.stream()
+                    .filter(x -> x[classIndex].equals(attributeOption)).count();
+
+                if (tempCount > majorityClassCount)
+                {
+                    majorityClassCount = tempCount;
+                    classLabel = attributeOption;
+                }
+            }
+        }
+
+        if (data.size() <= MAX_PER_LEAF || depth == MAX_DEPTH || majorityClassCount == data.size()) {
+            return new Node(classLabel, -1, -1);
+        }
+
+        Pair<Integer, Double> splitInformation = getSplitAttribute(data);
+        AttributeInfo bestSplitAttributeInfo = attributeInfoList.get(splitInformation.getLeft());
+        Node innerNode = new Node("", splitInformation.getLeft(), splitInformation.getRight());
+
+        if (bestSplitAttributeInfo.isContinous()) {
+            List<String[]> lessEqualChild = data.stream()
+                .filter(x -> NumberUtils.toDouble(x[splitInformation.getLeft()]) <= splitInformation.getRight())
+                .collect(Collectors.toList());
+            innerNode.children.put("<=", treeBuilder(lessEqualChild, depth + 1));
+
+            List<String[]> greaterChild = data.stream()
+                .filter(x -> NumberUtils.toDouble(x[splitInformation.getLeft()]) > splitInformation.getRight())
+                .collect(Collectors.toList());
+            innerNode.children.put(">", treeBuilder(greaterChild, depth + 1));
+        }
+        else {
+            for (String attributeOption : bestSplitAttributeInfo.getValues()) {
+                List<String[]> childData = data.stream()
+                    .filter(x -> x[splitInformation.getLeft()].equals(attributeOption))
+                    .collect(Collectors.toList());
+                innerNode.children.put(attributeOption, treeBuilder(childData, depth + 1));
+            }
+        }
+
+        return innerNode;
     }
 
     // Get Best Split
@@ -196,6 +274,40 @@ public class DecisionTree {
     }
 
     public double log2(double x) {
+
         return x == 0 ? 0 : Math.log(x) / Math.log(2);
+    }
+
+    public void printTree() {
+        AttributeInfo classAttributeInfo = attributeInfoList.get(classIndex);
+        System.out.print("Classification: " + classAttributeInfo.getName() + " Labels: ");
+
+        if (classAttributeInfo.isContinous()) {
+            System.out.println("[<=" + classThreshold + ", >" + classThreshold + "]");
+        }
+        else {
+            System.out.println(classAttributeInfo.getValues().toString());
+        }
+
+        printTreeNode("", root);
+    }
+
+    public void printTreeNode(String prefix, Node node) {
+        AttributeInfo attributeInfo = attributeInfoList.get(node.attribute); 
+        boolean isAttributeContinuous = attributeInfo.isContinous();
+        String currentAttributeStr = prefix + attributeInfo.getName() + " : ";
+           
+        for (Map.Entry<String, Node> childNode : node.children.entrySet()) {
+            System.out.println(currentAttributeStr +
+                childNode.getKey() + (isAttributeContinuous ? node.threshold : ""));
+
+            if (childNode.getValue().isLeaf()) {
+                System.out.println("|---" + prefix + childNode.getValue().classification +
+                    (attributeInfoList.get(classIndex).isContinous() ? classThreshold : ""));
+            }
+            else {
+                printTreeNode("|---" + prefix, childNode.getValue());
+            }
+        }
     }
 }
