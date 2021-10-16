@@ -13,7 +13,10 @@ import com.opencsv.CSVReader;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.*;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -54,26 +57,19 @@ public class HomeController implements Initializable {
         try {
             if ( datasetFilePath != null && !datasetFilePath.isBlank()) {
                 if (datasetFilePath.endsWith(".csv")) {
-                    CSVReader reader = new CSVReader(new FileReader(datasetFilePath));
-                    List<AttributeInfo> attributeInfos = new ArrayList<>();
-                    List<String[]> linesInCSV = reader.readAll();
-                    String[] headerLine = linesInCSV.get(0);
-                    linesInCSV.remove(0);
+                    // Switch Scene
+                    Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("../Visualizer.fxml"));
+                    Parent root = loader.load();
+                    VisualizerController visualizerController = loader.getController();
 
-                    for (String attributeName : headerLine) {
-                        attributeInfos.add(new AttributeInfo(attributeName));
-                    }
-
-                    for (String[] lineInCSV : linesInCSV) {
-                        for (int i = 0; i < lineInCSV.length; i++) {
-                            attributeInfos.get(i).addValue(lineInCSV[i]);
-                        }
-                    }
-
-                    DecisionTree dt = new DecisionTree(linesInCSV, attributeInfos, 4);
-                    dt.printTree();
+                    visualizerController.setDecisionTreeData(datasetFilePath);
+                    stage.setScene(new Scene(root));
+                    stage.show();
                 }
                 else {
+                    errorLabel.setText("Invalid File Type. Must be csv file.");
+                    errorLabel.setVisible(true);
                     System.out.println("Invalid File Type. Must be csv file.");
                 }
             }
@@ -82,6 +78,8 @@ public class HomeController implements Initializable {
             }
         }
         catch (Exception e) {
+            errorLabel.setText(e.getLocalizedMessage());
+            errorLabel.setVisible(true);
             System.out.println(e.getLocalizedMessage());
         }
     }
@@ -90,5 +88,4 @@ public class HomeController implements Initializable {
     public void initialize(URL arg0, ResourceBundle arg1) {
         errorLabel.setVisible(false);
     }
-    
 }

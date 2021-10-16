@@ -9,12 +9,17 @@ import javafx.stage.Stage;
 public class Main extends Application{
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("View/Home.fxml"));
-        Scene scene = new Scene(root);
-
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Decision Tree");
-        primaryStage.show();
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("Home.fxml"));
+            Scene scene = new Scene(root);
+    
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("Decision Tree");
+            primaryStage.show();
+        }
+        catch (Exception e) {
+            System.out.println(e.getLocalizedMessage());
+        }
     }
 
     public static void main(String[] args) {
