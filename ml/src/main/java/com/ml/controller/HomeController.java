@@ -57,15 +57,19 @@ public class HomeController implements Initializable {
         try {
             if ( datasetFilePath != null && !datasetFilePath.isBlank()) {
                 if (datasetFilePath.endsWith(".csv")) {
-                    // Switch Scene
-                    Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("../Visualizer.fxml"));
-                    Parent root = loader.load();
-                    VisualizerController visualizerController = loader.getController();
+                    DecisionTree dt = createDecisionTreeData(datasetFilePath);
 
-                    visualizerController.setDecisionTreeData(datasetFilePath);
-                    stage.setScene(new Scene(root));
-                    stage.show();
+                    if (dt != null) {
+                        // Switch Scene
+                        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("../Visualizer.fxml"));
+                        VisualizerController visualizerController = new VisualizerController(dt);
+                        loader.setController(visualizerController);
+                        Parent root = loader.load();
+                        
+                        stage.setScene(new Scene(root));
+                        stage.show();
+                    }
                 }
                 else {
                     errorLabel.setText("Invalid File Type. Must be csv file.");
@@ -87,5 +91,31 @@ public class HomeController implements Initializable {
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
         errorLabel.setVisible(false);
+    }
+
+    public DecisionTree createDecisionTreeData(String datasetFilePath) {
+        try {
+            CSVReader reader = new CSVReader(new FileReader(datasetFilePath));
+            List<AttributeInfo> attributeInfos = new ArrayList<>();
+            List<String[]> linesInCSV = reader.readAll();
+            String[] headerLine = linesInCSV.get(0);
+            linesInCSV.remove(0);
+    
+            for (String attributeName : headerLine) {
+                attributeInfos.add(new AttributeInfo(attributeName));
+            }
+    
+            for (String[] lineInCSV : linesInCSV) {
+                for (int i = 0; i < lineInCSV.length; i++) {
+                    attributeInfos.get(i).addValue(lineInCSV[i]);
+                }
+            }
+            
+            return new DecisionTree(linesInCSV, attributeInfos, 4);
+        }
+        catch (Exception e) {
+            System.out.println(e.getLocalizedMessage());
+            return null;
+        }
     }
 }

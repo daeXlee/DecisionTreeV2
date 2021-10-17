@@ -3,7 +3,6 @@ package com.ml;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,6 +40,7 @@ public class DecisionTree {
     private List<AttributeInfo> attributeInfoList;
     private int classIndex;  // Index of Classification Attribute in the dataset
     private double classThreshold; // Only set if Classification is Continuous
+    private int treeDepth;
 
     // Used to determine when a node is a leaf
     final int MAX_PER_LEAF = 3;
@@ -50,6 +50,7 @@ public class DecisionTree {
         this.trainData = trainData;
         this.attributeInfoList = attributeInfoList;
         this.classIndex = classIndex;
+        this.treeDepth = 1;
         this.root = buildTree();
     }
 
@@ -88,6 +89,10 @@ public class DecisionTree {
         AttributeInfo classAttribute = attributeInfoList.get(classIndex);
         String classLabel = "";
         long majorityClassCount = 0;
+
+        if (depth > treeDepth) {
+            treeDepth = depth;
+        }
 
         if (classAttribute.isContinous()) {
             long lessThanEqualCount =  data.stream()
@@ -309,5 +314,13 @@ public class DecisionTree {
                 printTreeNode("|---" + prefix, childNode.getValue());
             }
         }
+    }
+
+    public Node getRoot() {
+        return root;
+    }
+
+    public int getDepth() {
+        return treeDepth;
     }
 }
