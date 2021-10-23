@@ -51,11 +51,6 @@ public class VisualizerController implements Initializable{
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
-        Pane wrapperPane = new Pane();
-        rootContainer.setCenter(wrapperPane);
-        
-        wrapperPane.getChildren().add(dt);
-        dt.widthProperty().bind(wrapperPane.widthProperty());
-        dt.heightProperty().bind(wrapperPane.heightProperty());
+        rootContainer.setCenter(dt);
     }
 }
